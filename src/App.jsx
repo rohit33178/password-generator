@@ -1,11 +1,31 @@
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 
 function App() {
   const [length, setLength] = useState(8)
   const [useNumber, setUseNumber] = useState(false)
   const [useCharecter, setUseCharecter] = useState(false)
   const [password, setPassword] = useState("")
- 
+  const [passwordLength, setPasswordLength] = useState(6)
+  const [end, setEnd] = useState(false)
+
+  const passwordRef = useRef("");
+
+  const handleCopy = useCallback(() => {
+
+    let startNo = !end ? 0 : length - Number(passwordLength)
+    let endNo = end ? length : passwordLength
+    console.log("startNo", startNo)
+    console.log("endNo", endNo)
+    console.log("end", end)
+    console.log("passwordLength", passwordLength)
+
+    passwordRef.current.select()
+    
+    passwordRef.current.setSelectionRange(startNo,endNo)
+
+    window.navigator.clipboard.writeText(passwordRef.current.value)
+  },[length, password, passwordLength, end])
+
   const passwordGenerator = useCallback(() => {
     let password = ""
     let str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -17,13 +37,12 @@ function App() {
       let char = Math.floor(Math.random() * str.length + 1)
       password += str.charAt(char);
     }
-    console.log(length)
     setPassword(password)
 
-  }, [length, useNumber, useCharecter, setPassword])
+  }, [length, useNumber, useCharecter, setPassword, passwordLength, end])
   useEffect(() => {
     passwordGenerator()
-  }, [length, useNumber, useCharecter])
+  }, [length, useNumber, useCharecter, passwordGenerator, passwordLength, end])
 
   return (
     <div className="w-full h-screen bg-black p-5">
@@ -37,9 +56,12 @@ function App() {
             className="w-full p-2"
             readOnly={true}
             value={password}  
-            onChange={() => {}}
+            onChange={() => setLength(prevLen => prevLen = password?.length)}
+            ref={passwordRef}
           />
-          <button className="outline-none bg-blue-700 text-white px-3 py-0.5 shrink-0 ">Copy</button>
+          <button 
+            onClick={handleCopy}
+            className="outline-none bg-blue-700 text-white px-3 py-0.5 shrink-0 ">Copy</button>
         </div>
         <div className="flex gap-2 text-sm">
           <div className="flex item-center gap-x-1">
@@ -47,7 +69,8 @@ function App() {
             min={6} 
             max={36}
             value={length}
-            onChange={(e) => setLength(e.target.value)}
+            onChange={(e) => setLength(preLen => preLen = e.target.value)}
+            className="w-20"
             />
             <label>Length: {length}</label>
           </div>
@@ -70,7 +93,31 @@ function App() {
             />
             <label>Charecter</label>
           </div>
-
+        </div>
+        <div className="flex gap-2 text-sm mt-3">
+          <div className="flex item-center gap-x-1">
+              <input type="range" 
+                min={6} 
+                max={length}
+                value={passwordLength}
+                onChange={(e) => {
+                  let passLength = e.target.value
+                  setPasswordLength(prevLength => prevLength = passLength)
+                }}
+                className="w-20"
+              />
+              <label>Copy Length: {passwordLength}</label>
+            </div>
+            
+            <div className="flex item-center gap-x-1">
+              <input 
+                type="checkbox" 
+                defaultChecked={end ? true : false}
+                value={end}
+                onChange={(e) => setEnd(prevEnd => !prevEnd)}
+              />
+            <label>Copy From {`${end ? "End" : "start" }`}</label>
+          </div>
         </div>
       </div>
     </div>
